@@ -2,43 +2,65 @@ const COINS_URL = 'https://api.coinpaprika.com/v1/coins';
 
 const getSingleCoinUrl = id => `https://api.coinpaprika.com/v1/coins/${id}/ohlcv/today/`;
 
+class MyPromise {
+  constructor(behaviorFunction) {
+    this._status = 'pending';
+    this._result = null;
+    this._errorCallbacks = [];
+    this._successCallbacks = [];
+
+    behaviorFunction(this._resolve.bind(this), this._reject.bind(this));
+  }
+
+  then(successCallback) {
+    if (this._status === 'fulfilled') {
+      successCallback(this._result);
+    } else {
+      this._successCallbacks.push(successCallback);
+    } 
+  }
+
+  catch(errorCallback) {
+    if (this._status === 'rejected') {
+      errorCallback(this._result);
+    } else {
+      this._errorCallbacks.push(errorCallback);
+    } 
+  }
+
+  _resolve(data) {
+    this._status = 'fulfilled';
+    this._result = data;
+    this._successCallbacks.forEach(callback => callback(data))
+  }
+
+  _reject(error) {
+    this._status = 'rejected';
+    this._result = error;
+    this._errorCallbacks.forEach(callback => callback(data))
+  }
+}
+
 const HttpService = {
   sendRequest(url) {
-    let promise = {
-      _status: 'pending',
-      _result: null,
-      _successCallbacks: [],
+    let promise = new MyPromise((resolve, reject) => {
+      var xhr = new XMLHttpRequest();
 
-      then(successCallback) {
-        console.log('then')
-        if (this._status === 'fulfilled') {
-          successCallback(this._result);
-        } else {
-          this._successCallbacks.push(successCallback);
-        }
-        
-      },
+      xhr.open('GET', url);
 
-      _resolve(data) {
-        console.log('resolve')
-        this._status = 'fulfilled';
-        this._result = data;
-        this._successCallbacks.forEach(callback => callback(data))
+      xhr.send();
+
+      xhr.onload = () => {
+        let responseData = JSON.parse(xhr.responseText);
+        resolve(responseData);
       }
-    };
 
-    var xhr = new XMLHttpRequest();
-
-    xhr.open('GET', url);
-
-    xhr.send();
-
-    xhr.onload = () => {
-      let responseData = JSON.parse(xhr.responseText);
-      promise._resolve(responseData);
-      // successCallback(responseData);
-    }
-
+      xhr.onerror = () => {
+        let responseData = JSON.parse(xhr.responseText);
+        reject(xhr.responseText);
+      }
+    });
+   
     return promise;
   },
 
@@ -68,14 +90,16 @@ const DataService = {
 
     promise.then(result => {
       console.log(result)
+    }, err => {
+      console.log('from then')
+      console.error(err)
     })
 
-    setTimeout(() => {
-      console.log('async cb')
-      promise.then(result => {
-        console.log(result)
-      })
-    }, 1000)
+    promise.catch(err => {
+      console.error(err)
+    })
+
+
 
     // HttpService.sendRequest({
     //   url: COINS_URL,
