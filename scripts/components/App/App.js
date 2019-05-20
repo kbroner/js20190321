@@ -12,14 +12,13 @@ export class App {
      
     this._render();
 
-    this._data = DataService.getCurrencies();
+    DataService.getCurrencies(data => {
+      this._data = data;
+      this._initTable(this._data);
+    });
 
     this._initPortfolio();
-    this._initTradeWidget();
-
-    
-    this._initTable(this._data);
-
+    this._initTradeWidget();    
   } 
   
   tradeItem(id) {
@@ -38,13 +37,21 @@ export class App {
     this._tradeWidget = new TradeWidget({
       element: this._el.querySelector('[data-element="trade-widget"]'),
     })
+
+    this._tradeWidget.on('buy', e => {
+      const { item, amount } = e.detail;
+      this._portfolio.addItem(item, amount);
+    })
   }
 
   _initTable(data) {
     this._table = new Table({
       data,
       element: this._el.querySelector('[data-element="table"]'),
-      onRowClick: id => this.tradeItem(id),
+    })
+
+    this._table.on('rowClick', e => {
+      this.tradeItem(e.detail.id)
     })
   }
     

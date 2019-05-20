@@ -1,7 +1,10 @@
-export class Table {
-  constructor({ data, element, onRowClick }) {
+import BaseComponent from '../BaseComponent/BaseComponent.js';
+
+export class Table extends BaseComponent {
+  constructor({ data, element }) {
+    super();
+    
     this._el = element;
-    this._onRowClickCallback = onRowClick;
 
      
     this._render(data);
@@ -9,14 +12,19 @@ export class Table {
     this._el.addEventListener('click', e => {
       this._onRowClick(e);
     })
-  } 
+  }
 
   _onRowClick(e) {
-    const target = e.target.closest('tr');
+    const target = e.target.closest('tbody tr');
     if (!target) return;
 
     const id = target.dataset.id;
-    this._onRowClickCallback(id);
+    if (id) {
+      let rowClickEvent = new CustomEvent('rowClick', {
+        detail: { id },
+      });
+      this._el.dispatchEvent(rowClickEvent);
+    }
   }
     
      _render(data) {

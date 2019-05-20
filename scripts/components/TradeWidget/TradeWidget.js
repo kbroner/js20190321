@@ -1,5 +1,12 @@
-export class TradeWidget {
+import BaseComponent from '../BaseComponent/BaseComponent.js';
+
+function isNumeric(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+export class TradeWidget extends BaseComponent {
   constructor({ element }) {
+      super();
       this._el = element;
 
       this._el.addEventListener('input', e => {
@@ -7,6 +14,32 @@ export class TradeWidget {
 
         const value = +e.target.value;
         this._updateDisplay(value);
+      })
+
+      this._el.addEventListener('click', e => {
+        if (e.target.closest('[data-id="cancel"]')) {
+          this.close();
+        }
+
+        if (e.target.closest('[data-id="buy"]')) {
+          let buyEvent = new CustomEvent('buy', {
+            detail: {
+              amount: +this._el.querySelector('#amount').value,
+              item: this._currentItem,
+            }
+          });
+          this._el.dispatchEvent(buyEvent);
+          this.close();
+        }
+      })
+
+      this._el.addEventListener('keydown', e => {
+        if (!e.target.closest('#amount')) return;
+
+        const { key } = e;
+        if (!isNumeric(key) && key !== 'Backspace') {
+          e.preventDefault();
+        }
       })
   }
 
@@ -22,7 +55,7 @@ export class TradeWidget {
   }
 
   _updateDisplay(value) {
-    this._totalEl = this._totalEl || this._el.querySelector('#item-total')
+    this._totalEl = this._el.querySelector('#item-total')
     this._totalEl.textContent = this._currentItem.price * value;
   }
 
@@ -46,8 +79,8 @@ export class TradeWidget {
           </div>
 
           <div class="modal-footer">
-            <a href="#!" class="modal-close waves-effect waves-teal btn-flat">Buy</a>
-            <a href="#!" class="modal-close waves-effect waves-teal btn-flat">Cancel</a>
+            <a href="#!" data-id="buy" class="modal-close waves-effect waves-teal btn-flat">Buy</a>
+            <a href="#!" data-id="cancel" class="modal-close waves-effect waves-teal btn-flat">Cancel</a>
           </div>
       </div>
       </div>

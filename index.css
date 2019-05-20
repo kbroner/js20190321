@@ -4,9 +4,21 @@ html, body {
 
 #app {
     display: flex;
-    height: 100%;
     flex-direction: column;
     justify-content: flex-end;
+}
+
+.portfolio {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+}
+
+.collapsible-body {
+  background: white;
+}
+p.collapsible-header {
+  margin: 0;
 }
 
 .row {
