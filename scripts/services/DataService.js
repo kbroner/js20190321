@@ -12,11 +12,14 @@ class MyPromise {
     behaviorFunction(this._resolve.bind(this), this._reject.bind(this));
   }
 
-  then(successCallback) {
+  then(successCallback, errorCalback) {
     if (this._status === 'fulfilled') {
       successCallback(this._result);
+    } else if (this._status === 'rejected') {
+      errorCalback(this._result);
     } else {
       this._successCallbacks.push(successCallback);
+      this._errorCallbacks.push(errorCalback);
     } 
   }
 
@@ -43,7 +46,7 @@ class MyPromise {
 
 const HttpService = {
   sendRequest(url) {
-    let promise = new MyPromise((resolve, reject) => {
+    let promise = new Promise((resolve, reject) => {
       var xhr = new XMLHttpRequest();
 
       xhr.open('GET', url);
@@ -64,69 +67,46 @@ const HttpService = {
     return promise;
   },
 
-  sendMultipleRequests(urls, callback) {
-    let requestCount = urls.length;
-    let results = [];
+  sendMultipleRequests(urls) {
+    let requests = urls.map(url => this.sendRequest(url))
+    return Promise.all(requests);
 
-    urls.forEach(url => {
-      HttpService.sendRequest({ 
-        url, 
-        successCallback: data => {
-          results.push({ url, data });
-          requestCount--;
+    // let requestCount = urls.length;
+    // let results = [];
 
-          if (!requestCount) {
-            callback(results);
-          }
-        }
-      })
-    })
+    // urls.forEach(url => {
+    //   HttpService.sendRequest({ 
+    //     url, 
+    //     successCallback: data => {
+    //       results.push({ url, data });
+    //       requestCount--;
+
+    //       if (!requestCount) {
+    //         callback(results);
+    //       }
+    //     }
+    //   })
+    // })
   },
 };
 
 const DataService = {
-  getCurrencies(callback) {
-    let promise = HttpService.sendRequest(COINS_URL);
-
-    promise.then(result => {
-      console.log(result)
-    }, err => {
-      console.log('from then')
-      console.error(err)
+  getCurrencies() {
+    return HttpService.sendRequest(COINS_URL).then(data => {
+      return DataService.getCurrenciesPrices(data.slice(0, 10));
     })
-
-    promise.catch(err => {
-      console.error(err)
-    })
-
-
-
-    // HttpService.sendRequest({
-    //   url: COINS_URL,
-    //   successCallback: data => {
-    //     DataService.getCurrenciesPrices(data.slice(0, 10), callback)
-    //   }
-    // })
   },
 
-  getCurrenciesPrices(data, callback) {
-    let coinsIds = data.map(coin => coin.id);
-    const coinsIdMap = coinsIds.reduce((acc, id) => {
-      acc[getSingleCoinUrl(id)] = id;
-      return acc;
-    }, {});
+  getCurrenciesPrices(data) {
+    const coinsUrls = data.map(coin => getSingleCoinUrl(coin.id));
 
-    HttpService.sendMultipleRequests(Object.keys(coinsIdMap), coins => {
-      const dataWithPrice = data.map(item => {
-        let itemUrl = getSingleCoinUrl(item.id);
-        let [itemPriceData] = coins.find(coin => coin.url === itemUrl).data;
-        item.price = itemPriceData.close;
-
-        return item;
+    return HttpService.sendMultipleRequests(coinsUrls)
+      .then(coins => {
+        return data.map((item, index) => {
+          item.price = coins[index][0].close;
+          return item;
+        })
       })
-
-      callback(dataWithPrice)
-    })
 
   }
 }

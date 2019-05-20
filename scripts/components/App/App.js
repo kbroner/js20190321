@@ -12,7 +12,8 @@ export class App {
      
     this._render();
 
-    DataService.getCurrencies(data => {
+    DataService.getCurrencies().then(data => {
+      console.log(data)
       this._data = data;
       this._initTable(this._data);
     });
