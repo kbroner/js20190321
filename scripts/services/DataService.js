@@ -2,26 +2,52 @@ const COINS_URL = 'https://api.coinpaprika.com/v1/coins';
 
 const getSingleCoinUrl = id => `https://api.coinpaprika.com/v1/coins/${id}/ohlcv/today/`;
 
-const DataService = {
-  _sendRequest({ url, successCallback, method = 'GET' }) {
+const HttpService = {
+  sendRequest(url) {
+    let promise = {
+      _status: 'pending',
+      _result: null,
+      _successCallbacks: [],
+
+      then(successCallback) {
+        console.log('then')
+        if (this._status === 'fulfilled') {
+          successCallback(this._result);
+        } else {
+          this._successCallbacks.push(successCallback);
+        }
+        
+      },
+
+      _resolve(data) {
+        console.log('resolve')
+        this._status = 'fulfilled';
+        this._result = data;
+        this._successCallbacks.forEach(callback => callback(data))
+      }
+    };
+
     var xhr = new XMLHttpRequest();
 
-    xhr.open(method, url);
+    xhr.open('GET', url);
 
     xhr.send();
 
     xhr.onload = () => {
       let responseData = JSON.parse(xhr.responseText);
-      successCallback(responseData);
+      promise._resolve(responseData);
+      // successCallback(responseData);
     }
+
+    return promise;
   },
 
-  _sendMultipleRequests(urls, callback) {
+  sendMultipleRequests(urls, callback) {
     let requestCount = urls.length;
     let results = [];
 
     urls.forEach(url => {
-      DataService._sendRequest({ 
+      HttpService.sendRequest({ 
         url, 
         successCallback: data => {
           results.push({ url, data });
@@ -34,14 +60,29 @@ const DataService = {
       })
     })
   },
+};
 
+const DataService = {
   getCurrencies(callback) {
-    DataService._sendRequest({
-      url: COINS_URL,
-      successCallback: data => {
-        DataService.getCurrenciesPrices(data.slice(0, 10), callback)
-      },
+    let promise = HttpService.sendRequest(COINS_URL);
+
+    promise.then(result => {
+      console.log(result)
     })
+
+    setTimeout(() => {
+      console.log('async cb')
+      promise.then(result => {
+        console.log(result)
+      })
+    }, 1000)
+
+    // HttpService.sendRequest({
+    //   url: COINS_URL,
+    //   successCallback: data => {
+    //     DataService.getCurrenciesPrices(data.slice(0, 10), callback)
+    //   }
+    // })
   },
 
   getCurrenciesPrices(data, callback) {
@@ -51,7 +92,7 @@ const DataService = {
       return acc;
     }, {});
 
-    DataService._sendMultipleRequests(Object.keys(coinsIdMap), coins => {
+    HttpService.sendMultipleRequests(Object.keys(coinsIdMap), coins => {
       const dataWithPrice = data.map(item => {
         let itemUrl = getSingleCoinUrl(item.id);
         let [itemPriceData] = coins.find(coin => coin.url === itemUrl).data;
