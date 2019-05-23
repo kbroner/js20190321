@@ -14,15 +14,27 @@ export class App {
      
     this._render();
 
-    DataService.getCurrencies().then(data => {
-      this._data = data;
-      this._initTable(this._data);
-    });
+    this.fetchData();
 
     this._initFilter();
     this._initPortfolio();
     this._initTradeWidget();    
-  } 
+  }
+
+  async fetchData() {
+    // DataService.getCurrencies().then(data => {
+    //   this._data = data;
+    //   return this._initTable(this._data);
+    // })
+    
+    try {
+      let data = await DataService.getCurrencies()
+      this._data = data;
+      this._initTable(this._data);
+    } catch (err) {
+      console.error(err)
+    }
+  }
   
   tradeItem(id) {
     const coin = this._data.find(coin => coin.id === id);
