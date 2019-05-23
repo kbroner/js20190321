@@ -5,6 +5,7 @@ export class Portfolio {
       this._balance = balance;
       this._items = {};
       this._render();
+      console.log()
   }
 
   addItem(item, amount) {
