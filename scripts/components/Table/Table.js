@@ -26,6 +26,10 @@ export class Table extends BaseComponent {
       this._el.dispatchEvent(rowClickEvent);
     }
   }
+
+  displayData(data) {
+    this._render(data);
+  }
     
      _render(data) {
         this._el.innerHTML = `

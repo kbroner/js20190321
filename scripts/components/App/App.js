@@ -1,6 +1,8 @@
 import { Table } from '../Table/Table.js';
 import { Portfolio } from '../Portfolio/Portfolio.js';
 import { TradeWidget } from '../TradeWidget/TradeWidget.js';
+import { Filter } from '../Filter/Filter.js';
+
 
 
 import DataService from '../../services/DataService.js';
@@ -13,11 +15,11 @@ export class App {
     this._render();
 
     DataService.getCurrencies().then(data => {
-      console.log(data)
       this._data = data;
       this._initTable(this._data);
     });
 
+    this._initFilter();
     this._initPortfolio();
     this._initTradeWidget();    
   } 
@@ -25,6 +27,19 @@ export class App {
   tradeItem(id) {
     const coin = this._data.find(coin => coin.id === id);
     this._tradeWidget.trade(coin)
+  }
+
+  _initFilter() {
+    this._filter = new Filter({
+      element: this._el.querySelector('[data-element="filter"]'),
+    });
+
+    this._filter.on('filter', e => {
+      DataService.getCurrencies({ filter: e.detail }).then(data => {
+        this._data = data;
+        this._table.displayData(this._data);
+      });
+    })
   }
 
   _initPortfolio() {
@@ -67,6 +82,9 @@ export class App {
                 <div class="col s6 offset-s6" data-element="portfolio"></div>
             </div>
 
+            <div class="row">
+              <div data-element="filter" class="col s12"></div>
+            </div>
             <div class="row">
               <div data-element="table" class="col s12"></div>
             </div>
