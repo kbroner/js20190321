@@ -4,25 +4,27 @@ const getSingleCoinUrl = id => `https://api.coinpaprika.com/v1/coins/${id}/ohlcv
 
 const HttpService = {
   sendRequest(url) {
-    let promise = new Promise((resolve, reject) => {
-      var xhr = new XMLHttpRequest();
+    return fetch(url).then(res => res.json());
 
-      xhr.open('GET', url);
+    // let promise = new Promise((resolve, reject) => {
+    //   var xhr = new XMLHttpRequest();
 
-      xhr.send();
+    //   xhr.open('GET', url);
 
-      xhr.onload = () => {
-        let responseData = JSON.parse(xhr.responseText);
-        resolve(responseData);
-      }
+    //   xhr.send();
 
-      xhr.onerror = () => {
-        let responseData = JSON.parse(xhr.responseText);
-        reject(xhr.responseText);
-      }
-    });
+    //   xhr.onload = () => {
+    //     let responseData = JSON.parse(xhr.responseText);
+    //     resolve(responseData);
+    //   }
+
+    //   xhr.onerror = () => {
+    //     let responseData = JSON.parse(xhr.responseText);
+    //     reject(xhr.responseText);
+    //   }
+    // });
    
-    return promise;
+    // return promise;
   },
 
   sendMultipleRequests(urls) {
