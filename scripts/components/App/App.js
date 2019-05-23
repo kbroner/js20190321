@@ -4,7 +4,6 @@ import { TradeWidget } from '../TradeWidget/TradeWidget.js';
 import { Filter } from '../Filter/Filter.js';
 
 
-
 import DataService from '../../services/DataService.js';
 
 export class App {
@@ -18,7 +17,7 @@ export class App {
 
     this._initFilter();
     this._initPortfolio();
-    this._initTradeWidget();    
+    this._initTradeWidget();
   }
 
   async fetchData() {
